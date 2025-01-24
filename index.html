@@ -3,14 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון השוואת קרן השתלמות למורים</title>
+    <title>מחשבון השוואת תשואות קרן השתלמות</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             direction: rtl;
             text-align: center;
             background-color: #f4f4f4;
-       
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px #aaa;
+            background-color: #fff;
         }
         input {
             width: 100%;
@@ -38,7 +46,6 @@
             font-size: 18px;
             color: #444;
             text-align: center;
-            line-height: 1.8;
         }
         .facebook-link {
             display: flex;
@@ -80,6 +87,7 @@
         box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); /* צל עדין */
     }
 </style>
+
 
 <div class="container">
     <h2>מחשבון השוואת קרן השתלמות למורים</h2>
@@ -152,16 +160,65 @@
         document.getElementById("years2_2").value = totalYears - parseInt(document.getElementById("years2_1").value);
     }
 
+    function calculateInvestment(salary, currentFund, salaryIncrease, contributionRate, expectedReturn1, years1, expectedReturn2, years2) {
+        let totalFund = currentFund;
+        let yearlyData = [];
+
+        for (let i = 0; i < years1 + years2; i++) {
+            let rate = i < years1 ? expectedReturn1 : expectedReturn2;
+            let yearlyContribution = salary * (contributionRate / 100) * 12;
+            totalFund = (totalFund + yearlyContribution) * (1 + (rate / 100));
+            salary *= (1 + (salaryIncrease / 100));
+            yearlyData.push(totalFund);
+        }
+
+        return { totalFund, yearlyData };
+    }
+
     function calculateComparison() {
-        let bestOption = "אפשרות 1"; // חישוב לדוגמה, כאן צריך לשלב חישובים אמיתיים
-        document.getElementById("summary").innerHTML = `
-            <p>לפי הנתונים שהזנת, אפשר לראות את הצבירה הצפויה בשתי האפשרויות.</p>
-            <p>באפשרות הראשונה תגיע ל-₪${Math.round(1500000).toLocaleString()},</p>
-            <p>ובאפשרות השנייה תגיע ל-₪${Math.round(1700000).toLocaleString()}.</p>
-            <p>ההפרש ביניהן עומד על ₪${Math.abs(Math.round(1700000 - 1500000)).toLocaleString()}.</p>
-            <p>מבין שתיהן, האפשרות העדיפה היא <strong>${bestOption}</strong>.</p>
-            <p>כמובן, ההחלטה היא שלך – וכל הנתונים מבוססים על מה שהזנת כאן במחשבון.</p>
-        `;
+        let salary = parseFloat(document.getElementById("salary").value);
+        let currentFund = parseFloat(document.getElementById("currentFund").value);
+        let salaryIncrease = parseFloat(document.getElementById("salaryIncrease").value);
+
+        let fund1 = calculateInvestment(salary, currentFund, salaryIncrease,
+            parseFloat(document.getElementById("contributionRate1").value),
+            parseFloat(document.getElementById("expectedReturn1_1").value),
+            parseInt(document.getElementById("years1_1").value),
+            parseFloat(document.getElementById("expectedReturn1_2").value),
+            parseInt(document.getElementById("years1_2").value)
+        );
+
+        let fund2 = calculateInvestment(salary, currentFund, salaryIncrease,
+            parseFloat(document.getElementById("contributionRate2").value),
+            parseFloat(document.getElementById("expectedReturn2_1").value),
+            parseInt(document.getElementById("years2_1").value),
+            parseFloat(document.getElementById("expectedReturn2_2").value),
+            parseInt(document.getElementById("years2_2").value)
+        );
+
+        let ctx = document.getElementById('comparisonChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 30 }, (_, i) => i + 1),
+                datasets: [
+                    { label: 'אפשרות 1', data: fund1.yearlyData, borderColor: 'blue', fill: false },
+                    { label: 'אפשרות 2', data: fund2.yearlyData, borderColor: 'red', fill: false }
+                ]
+            }
+        });
+let bestOption = fund1.totalFund > fund2.totalFund ? "אפשרות 1" : "אפשרות 2";
+document.getElementById("summary").innerHTML = `
+    <p>לפי הנתונים שהזנת, אפשר לראות את הצבירה הצפויה בשתי האפשרויות.</p>
+    <p>באפשרות הראשונה תגיע ל-₪${Math.round(fund1.totalFund).toLocaleString()},</p>
+    <p>ובאפשרות השנייה תגיע ל-₪${Math.round(fund2.totalFund).toLocaleString()}.</p>
+    <p>ההפרש ביניהן עומד על ₪${Math.abs(Math.round(fund1.totalFund - fund2.totalFund)).toLocaleString()}.</p>
+    <p>מבין שתיהן, האפשרות העדיפה היא <strong>${bestOption}</strong>.</p>
+    <p>כמובן, ההחלטה היא שלך – וכל הנתונים מבוססים על מה שהזנת כאן במחשבון.</p>
+`;
+
+
     }
 </script>
 
