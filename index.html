@@ -187,6 +187,12 @@
     }
 
     function calculateComparison() {
+
+        gtag('event', 'calculate_clicked', {
+            'event_category': 'User Interaction',
+            'event_label': 'Calculate Button Clicked'
+        });
+        
         let salary = parseFloat(document.getElementById("salary").value);
         let currentFund = parseFloat(document.getElementById("currentFund").value);
         let salaryIncrease = parseFloat(document.getElementById("salaryIncrease").value);
